@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pregnancy Medication Schedule</title>
+
+    <style>
+        :root {
+            --cream: #FBF7EF;
+            --cream-deep: #F3ECDD;
+            --paper: #FFFEFB;
+            --ink: #362F2A;
+            --ink-soft: #6B6259;
+            --ink-faint: #A69C8F;
+            --rose: #C97F91;
+            --rose-deep: #B15F73;
+            --rose-pale: #F6E4E8;
+            --sage: #7C9473;
+            --sage-deep: #5F7857;
+            --sage-pale: #E8EEE3;
+            --gold: #C99A44;
+            --gold-pale: #F5E9CE;
+            --line: #E7DFCE;
+            --shadow-sm: 0 1px 2px rgba(54, 47, 42, 0.06), 0 1px 1px rgba(54, 47, 42, 0.04);
+            --shadow-md: 0 4px 14px rgba(54, 47, 42, 0.08), 0 1px 3px rgba(54, 47, 42, 0.05);
+            --shadow-lg: 0 12px 32px rgba(54, 47, 42, 0.12), 0 2px 8px rgba(54, 47, 42, 0.06);
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background:
+                radial-gradient(ellipse 900px 500px at 10% -5%, rgba(201,127,145,0.07), transparent 60%),
+                radial-gradient(ellipse 700px 500px at 100% 0%, rgba(124,148,115,0.07), transparent 55%),
+                var(--cream);
+            color: var(--ink);
+            padding: 14px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 720px; margin: 0 auto; }
+
+        /* ===== Typography scale ===== */
+        h1, h2, .display-font {
+            font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+            letter-spacing: -0.01em;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            background: linear-gradient(155deg, var(--paper) 0%, var(--rose-pale) 130%);
+            border: 1px solid var(--line);
+            color: var(--ink);
+            padding: 20px 22px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -8%;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(201,127,145,0.16), transparent 70%);
+            pointer-events: none;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 svg { stroke: var(--rose-deep) !important; }
+
+        .header p {
+            font-size: 12.5px;
+            color: var(--ink-soft);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== Sync status pill ===== */
+        #syncStatus {
+            margin-top: 12px !important;
+            font-size: 11px !important;
+            color: var(--ink-soft) !important;
+            background: rgba(255,255,255,0.6);
+            border: 1px solid var(--line);
+            padding: 6px 10px;
+            border-radius: 20px;
+            display: inline-flex !important;
+            width: fit-content;
+            position: relative;
+            z-index: 1;
+        }
+
+        #syncDot { box-shadow: 0 0 0 3px rgba(124,148,115,0.15); }
+
+        /* ===== Nav button ===== */
+        #navToJourney, #navToMeds {
+            font-family: inherit !important;
+        }
+
+        /* ===== Progress tracker ===== */
+        .tracker {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+            animation: riseIn 0.5s ease both;
+        }
+
+        .tracker-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+
+        .tracker-date {
+            font-size: 12px;
+            color: var(--ink-faint);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tracker-count {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--rose-deep);
+        }
+
+        .tracker-bar-track {
+            width: 100%;
+            height: 9px;
+            background: var(--cream-deep);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+        }
+
+        .tracker-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--sage), var(--sage-deep));
+            border-radius: 20px;
+            transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+        }
+
+        .tracker-bar-fill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+            animation: shimmer 2.2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .tracker-msg {
+            font-size: 12px;
+            color: var(--ink-soft);
+            margin-top: 9px;
+        }
+
+        .tracker-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--line);
+        }
+
+        .tracker-reset {
+            font-size: 11px;
+            color: var(--rose-deep);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+            transition: opacity 0.15s ease;
+            margin-top: 0;
+        }
+
+        .tracker-reset:hover { opacity: 0.65; }
+
+        /* ===== History ===== */
+        .history {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-sm);
+            animation: riseIn 0.5s ease both;
+        }
+
+        .history-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .history-title svg {
+            width: 15px;
+            height: 15px;
+            stroke: var(--ink-faint);
+            transition: transform 0.25s ease;
+        }
+
+        .history-title.open svg { transform: rotate(180deg); }
+
+        .history-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+        }
+
+        .history-body.open { max-height: 600px; margin-top: 12px; }
+
+        .history-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 0;
+        }
+
+        .history-day {
+            width: 64px;
+            font-size: 11px;
+            color: var(--ink-soft);
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .history-day.today { color: var(--rose-deep); }
+
+        .history-bar-track {
+            flex: 1;
+            height: 7px;
+            background: var(--cream-deep);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .history-bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.4s ease;
+        }
+
+        .history-bar-fill.complete { background: linear-gradient(90deg, var(--sage), var(--sage-deep)); }
+        .history-bar-fill.partial { background: linear-gradient(90deg, var(--gold), #b98a34); }
+        .history-bar-fill.none { background: var(--line); }
+
+        .history-count {
+            width: 42px;
+            text-align: right;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ink-soft);
+            flex-shrink: 0;
+        }
+
+        .med-grid-wrap { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+
+        .med-grid-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ink-faint);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .med-grid-header {
+            display: grid;
+            grid-template-columns: 1fr repeat(7, 22px);
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+
+        .med-grid-header span {
+            font-size: 9.5px;
+            color: var(--ink-faint);
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .med-grid-row {
+            display: grid;
+            grid-template-columns: 1fr repeat(7, 22px);
+            gap: 4px;
+            align-items: center;
+            padding: 5px 0;
+        }
+
+        .med-grid-name {
+            font-size: 11px;
+            color: var(--ink);
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 4px;
+        }
+
+        .med-grid-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 5px;
+            background: var(--cream-deep);
+            border: 1px solid var(--line);
+            margin: 0 auto;
+            transition: transform 0.15s ease;
+        }
+
+        .med-grid-dot.taken { background: var(--sage); border-color: var(--sage-deep); }
+        .med-grid-dot.today-col { box-shadow: 0 0 0 2px var(--rose); }
+
+        /* ===== Filter Tabs ===== */
+        .filter-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            padding: 5px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+        }
+
+        .filter-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 9px 10px;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--ink-soft);
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+        }
+
+        .filter-tab svg {
+            width: 15px;
+            height: 15px;
+            stroke: currentColor;
+            transition: transform 0.25s ease;
+        }
+
+        .filter-tab:hover { background: var(--rose-pale); color: var(--rose-deep); }
+        .filter-tab:active { transform: scale(0.96); }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+            color: white;
+            box-shadow: 0 4px 12px rgba(177, 95, 115, 0.3);
+        }
+
+        .filter-tab.active svg { transform: rotate(-8deg) scale(1.1); }
+
+        /* ===== Empty state ===== */
+        .empty-state {
+            text-align: center;
+            padding: 34px 16px;
+            color: var(--ink-faint);
+            animation: riseIn 0.5s ease both;
+        }
+
+        .empty-state svg {
+            width: 40px;
+            height: 40px;
+            stroke: var(--ink-faint);
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--ink-soft);
+        }
+
+        .empty-state span {
+            font-size: 11.5px;
+            color: var(--ink-faint);
+            display: block;
+            margin-top: 3px;
+        }
+
+        .empty-state.hidden { display: none; }
+
+        @keyframes riseIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Time sections ===== */
+        .time-section {
+            margin-bottom: 16px;
+            transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.4s ease;
+            overflow: hidden;
+        }
+
+        .time-section.hidden {
+            opacity: 0;
+            transform: translateY(-8px);
+            max-height: 0;
+            margin-bottom: 0;
+            pointer-events: none;
+        }
+
+        .time-section:not(.hidden) { animation: riseIn 0.5s ease both; }
+
+        .time-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-left: 2px;
+        }
+
+        .time-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
+        }
+
+        .time-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--rose-deep);
+        }
+
+        .time-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+        .time-subtitle { color: var(--ink-faint); font-size: 11.5px; margin-top: 1px; }
+
+        /* ===== Medicine cards ===== */
+        .medicine-card {
+            background: var(--paper);
+            border-radius: var(--radius-md);
+            padding: 13px 15px;
+            margin-bottom: 9px;
+            display: grid;
+            grid-template-columns: 42px 1fr auto;
+            gap: 13px;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            transition: transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s ease, border-color 0.25s ease;
+            animation: riseIn 0.5s ease both;
+            position: relative;
+        }
+
+        .medicine-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--rose);
+        }
+
+        .medicine-card:active { transform: translateY(-1px) scale(0.99); }
+
+        .medicine-card:nth-child(2) { animation-delay: 0.05s; }
+        .medicine-card:nth-child(3) { animation-delay: 0.1s; }
+        .medicine-card:nth-child(4) { animation-delay: 0.15s; }
+        .medicine-card:nth-child(5) { animation-delay: 0.2s; }
+
+        .medicine-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: var(--rose-pale);
+            color: var(--rose-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+            overflow: hidden;
+        }
+
+        .medicine-number img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .medicine-card:hover .medicine-number {
+            background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+            color: white;
+            transform: rotate(-6deg) scale(1.06);
+        }
+
+        .medicine-name { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+        .medicine-generic { font-size: 11.5px; color: var(--ink-soft); margin-bottom: 4px; line-height: 1.4; }
+        .medicine-purpose { font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; }
+        .medicine-purpose strong { color: var(--ink); }
+
+        .timing {
+            text-align: center;
+            min-width: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .timing-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 18px;
+            font-size: 10px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+            transition: transform 0.2s ease;
+        }
+
+        .medicine-card:hover .timing-badge { transform: scale(1.06); }
+
+        .before-food { background: var(--gold-pale); color: #92661e; }
+        .after-food { background: var(--sage-pale); color: var(--sage-deep); }
+        .evening-time { background: var(--rose-pale); color: var(--rose-deep); }
+        .timing-label { font-size: 10.5px; color: var(--ink-faint); }
+
+        /* ===== Check circle ===== */
+        .check-circle {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--paper);
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+
+        .check-circle svg {
+            width: 13px;
+            height: 13px;
+            stroke: white;
+            opacity: 0;
+            transition: opacity 0.15s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+            transform: scale(0.5);
+        }
+
+        .medicine-card.taken {
+            background: linear-gradient(155deg, var(--paper), var(--sage-pale));
+            border-color: var(--sage);
+        }
+
+        .medicine-card.taken .medicine-name { color: var(--sage-deep); }
+
+        .medicine-card.taken .check-circle {
+            background: linear-gradient(135deg, var(--sage), var(--sage-deep));
+            border-color: var(--sage-deep);
+        }
+
+        .medicine-card.taken .check-circle svg { opacity: 1; transform: scale(1); }
+
+        /* ===== Note callout ===== */
+        .note {
+            background: var(--gold-pale);
+            border: 1px solid #e6cf9d;
+            border-radius: var(--radius-sm);
+            padding: 13px 15px;
+            margin-top: 6px;
+            color: #6b4f1c;
+            font-size: 11.5px;
+            line-height: 1.55;
+        }
+
+        .note strong { color: #52390f; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 750px) {
+            body { padding: 10px; }
+            .header { padding: 16px 17px; }
+            .header h1 { font-size: 18px; }
+            .medicine-card { grid-template-columns: 38px 1fr; gap: 10px; }
+            .medicine-number { width: 38px; height: 38px; }
+            .timing { grid-column: 2; text-align: left; align-items: flex-start; flex-direction: row; gap: 8px; }
+        }
+
+        @media (max-width: 480px) {
+            .header { border-radius: 16px; }
+            .header h1 { font-size: 17px; }
+            .time-title { font-size: 14.5px; }
+            .medicine-card { padding: 11px 13px; }
+            .medicine-name { font-size: 13.5px; }
+            .medicine-generic { font-size: 10.5px; }
+            .medicine-purpose { font-size: 10.5px; }
+        }
+
+        /* ================================================
+           JOURNEY PAGE — creamy theme (was dark, now warm)
+           ================================================ */
+
+        #pageJourney { display: none; }
+        #pageJourney.jr-visible { display: block; }
+        #pageMeds.jr-hidden { display: none; }
+
+        .jr-header {
+            background: linear-gradient(155deg, var(--paper) 0%, var(--sage-pale) 140%);
+            border: 1px solid var(--line);
+            color: var(--ink);
+            padding: 18px 20px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 14px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .jr-header::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -10%;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(124,148,115,0.14), transparent 70%);
+            pointer-events: none;
+        }
+
+        .jr-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .jr-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .jr-header p {
+            font-size: 11.5px;
+            color: var(--ink-soft);
+            margin-top: 3px;
+        }
+
+        .jr-nav-link {
+            font-size: 11px;
+            color: var(--sage-deep);
+            text-decoration: none;
+            border: 1px solid var(--sage);
+            padding: 6px 11px;
+            border-radius: 20px;
+            white-space: nowrap;
+            background: rgba(255,255,255,0.6);
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+
+        .jr-nav-link:hover { background: var(--sage-pale); transform: translateY(-1px); }
+
+        .jr-journey-bar { margin-top: 16px; position: relative; z-index: 1; }
+
+        .jr-journey-track {
+            display: flex;
+            gap: 3px;
+            height: 8px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--cream-deep);
+        }
+
+        .jr-journey-seg { flex: 1; background: var(--cream-deep); transition: background 0.3s ease; }
+        .jr-journey-seg.jr-done { background: linear-gradient(90deg, var(--sage), var(--sage-deep)); }
+        .jr-journey-seg.jr-current { background: linear-gradient(90deg, var(--rose), var(--rose-deep)); }
+
+        .jr-journey-caption {
+            font-size: 10.5px;
+            color: var(--ink-soft);
+            margin-top: 7px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .jr-month-menu {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 5px;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            padding: 6px;
+            border-radius: var(--radius-md);
+            margin-bottom: 14px;
+            overflow-x: auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .jr-month-btn {
+            background: transparent;
+            border: none;
+            color: var(--ink-faint);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 9px 4px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+            position: relative;
+        }
+
+        .jr-month-btn:hover { background: var(--sage-pale); color: var(--ink); }
+        .jr-month-btn:active { transform: scale(0.94); }
+
+        .jr-month-btn.jr-active {
+            background: linear-gradient(135deg, var(--sage), var(--sage-deep));
+            color: white;
+            box-shadow: 0 4px 12px rgba(95, 120, 87, 0.3);
+        }
+
+        .jr-month-btn.jr-today-marker::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--rose);
+            box-shadow: 0 0 0 2px var(--paper);
+        }
+
+        .jr-month-panel {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-sm);
+            animation: jrFadeIn 0.4s ease both;
+        }
+
+        @keyframes jrFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .jr-month-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .jr-month-nav-arrow {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid var(--line);
+            background: var(--cream);
+            color: var(--ink-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+        }
+
+        .jr-month-nav-arrow svg { width: 15px; height: 15px; stroke: currentColor; }
+
+        .jr-month-nav-arrow:hover:not(:disabled) { background: var(--rose-pale); color: var(--rose-deep); border-color: var(--rose); }
+        .jr-month-nav-arrow:active:not(:disabled) { transform: scale(0.9); }
+        .jr-month-nav-arrow:disabled { opacity: 0.3; cursor: default; }
+
+        .jr-month-title-row > div { text-align: center; }
+
+        .jr-month-title { font-size: 18px; font-weight: 700; color: var(--ink); }
+        .jr-month-weeks { font-size: 11px; color: var(--ink-faint); font-weight: 600; }
+        .jr-month-desc { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 16px; line-height: 1.55; }
+
+        .jr-section-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+
+        .jr-section-tab {
+            background: var(--cream-deep);
+            border: 1px solid var(--line);
+            color: var(--ink-soft);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 7px 13px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .jr-section-tab svg { width: 13px; height: 13px; stroke: currentColor; }
+
+        .jr-section-tab.jr-active {
+            background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+            color: white;
+            border-color: transparent;
+        }
+
+        .jr-section-panel { display: none; }
+        .jr-section-panel.jr-active { display: block; animation: jrFadeIn 0.3s ease both; }
+
+        textarea.jr-notes-area {
+            width: 100%;
+            min-height: 100px;
+            background: var(--cream);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 12.5px;
+            padding: 11px 13px;
+            resize: vertical;
+            line-height: 1.55;
+        }
+
+        textarea.jr-notes-area:focus { outline: none; border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-pale); }
+
+        .jr-save-hint { font-size: 10px; color: var(--ink-faint); margin-top: 6px; }
+
+        .jr-item-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+        .jr-item-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--cream);
+            border: 1px solid var(--line);
+            border-radius: 11px;
+            padding: 9px 12px;
+        }
+
+        .jr-item-row input[type="text"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--ink);
+            font-size: 12.5px;
+            font-family: inherit;
+        }
+
+        .jr-item-row input[type="text"]:focus { outline: none; }
+        .jr-item-row input[type="text"]::placeholder { color: var(--ink-faint); }
+
+        .jr-item-remove {
+            background: none;
+            border: none;
+            color: var(--ink-faint);
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+
+        .jr-item-remove:hover { color: var(--rose-deep); background: var(--rose-pale); }
+
+        .jr-add-item-btn {
+            background: var(--sage-pale);
+            border: 1px dashed var(--sage);
+            color: var(--sage-deep);
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 9px 12px;
+            border-radius: 11px;
+            cursor: pointer;
+            font-family: inherit;
+            width: 100%;
+            transition: background 0.2s ease;
+        }
+
+        .jr-add-item-btn:hover { background: #d9e5d1; }
+
+        .jr-photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+            gap: 9px;
+            margin-bottom: 10px;
+        }
+
+        .jr-photo-thumb {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            position: relative;
+            background: var(--cream);
+        }
+
+        .jr-photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .jr-photo-thumb .jr-photo-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(54,47,42,0.6);
+            color: white;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .jr-photo-upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: 1.5px dashed var(--sage);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            color: var(--sage-deep);
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            background: var(--sage-pale);
+            transition: background 0.2s ease;
+        }
+
+        .jr-photo-upload-label:hover { background: #d9e5d1; }
+        .jr-photo-upload-label svg { width: 20px; height: 20px; stroke: var(--sage-deep); }
+
+        .jr-github-hint {
+            background: var(--gold-pale);
+            border: 1px solid #e6cf9d;
+            border-radius: 12px;
+            padding: 11px 13px;
+            font-size: 11px;
+            color: #6b4f1c;
+            line-height: 1.55;
+            margin-top: 6px;
+        }
+
+        .jr-github-hint strong { color: #52390f; }
+        .jr-github-hint code {
+            background: rgba(54,47,42,0.08);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 10.5px;
+        }
+
+        .jr-footer-note {
+            text-align: center;
+            font-size: 10.5px;
+            color: var(--ink-faint);
+            margin: 12px 0 4px;
+        }
+
+        @media (max-width: 600px) {
+            .jr-month-menu { grid-template-columns: repeat(5, 1fr); }
+            .jr-header h1 { font-size: 17px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL = 'https://enlvggruylyydpurxgvb.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVubHZnZ3J1eWx5eWRwdXJ4Z3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDczMDQsImV4cCI6MjEwMTc4MzMwNH0.3s61djYgzdqhYAaQhFJMEfpEcqSSX8k_3EZvpF2wRAw';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    window.__supabaseClient = supabase;
+
+    // Fixed shared record — anyone who opens this site shares the same data, no code needed.
+    const SHARED_ID = 'shared';
+
+    const syncDot = document.getElementById('syncDot');
+    const syncText = document.getElementById('syncText');
+
+    function setDot(color) { if (syncDot) syncDot.style.background = color; }
+
+    function collectLocalTrackerData() {
+        const out = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith('medTracker_') || k.startsWith('journey_'))) {
+                try { out[k] = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+            }
+        }
+        return out;
+    }
+
+    function applyRemoteData(data) {
+        if (!data || typeof data !== 'object') return;
+        Object.keys(data).forEach(k => {
+            if (k.startsWith('medTracker_') || k.startsWith('journey_')) {
+                localStorage.setItem(k, JSON.stringify(data[k]));
+            }
+        });
+    }
+
+    let pushTimer = null;
+    async function pushToSupabase() {
+        const payload = collectLocalTrackerData();
+        setDot('#ffca28');
+        if (syncText) syncText.textContent = 'Syncing…';
+        const { error } = await supabase
+            .from('tracker_state')
+            .upsert({ household_id: SHARED_ID, data: payload, updated_at: new Date().toISOString() });
+        if (error) {
+            setDot('#ef4444');
+            if (syncText) syncText.textContent = 'Sync error — will retry';
+        } else {
+            lastAppliedRemoteJson = JSON.stringify(payload);
+            setDot('#22c55e');
+            if (syncText) syncText.textContent = 'Synced';
+        }
+    }
+
+    function queuePush() {
+        clearTimeout(pushTimer);
+        pushTimer = setTimeout(pushToSupabase, 700);
+    }
+
+    // Watch localStorage writes made by the rest of the app and queue a push.
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(key, value) {
+        originalSetItem(key, value);
+        if (key && (key.startsWith('medTracker_') || key.startsWith('journey_'))) {
+            queuePush();
+        }
+    };
+
+    let lastAppliedRemoteJson = null;
+    let isFirstLoad = true;
+
+    async function pullFromSupabase({ reloadIfChanged } = {}) {
+        setDot('#ffca28');
+        if (syncText) syncText.textContent = 'Connecting…';
+        const { data, error } = await supabase
+            .from('tracker_state')
+            .select('data')
+            .eq('household_id', SHARED_ID)
+            .maybeSingle();
+
+        if (error) {
+            setDot('#ef4444');
+            if (syncText) syncText.textContent = 'Could not connect — using local data';
+            return;
+        }
+
+        if (data && data.data) {
+            const remoteJson = JSON.stringify(data.data);
+            const localJson = JSON.stringify(collectLocalTrackerData());
+            // Only treat this as a real change if the remote content actually
+            // differs from what's already on this device — not just "first time asking".
+            const differsFromLocal = remoteJson !== localJson;
+            lastAppliedRemoteJson = remoteJson;
+
+            if (differsFromLocal) {
+                applyRemoteData(data.data);
+            }
+            setDot('#22c55e');
+            if (syncText) syncText.textContent = 'Synced';
+
+            if (differsFromLocal && reloadIfChanged && !isFirstLoad) {
+                location.reload();
+            }
+        } else {
+            // No remote row yet — push whatever we have locally to create it.
+            lastAppliedRemoteJson = JSON.stringify(collectLocalTrackerData());
+            await pushToSupabase();
+        }
+        isFirstLoad = false;
+    }
+
+    function subscribeRealtime() {
+        supabase
+            .channel('tracker_state_' + SHARED_ID)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'tracker_state',
+                filter: 'household_id=eq.' + SHARED_ID
+            }, (payload) => {
+                const newData = payload.new && payload.new.data;
+                if (newData) {
+                    const remoteJson = JSON.stringify(newData);
+                    // Ignore echoes of our own recent push.
+                    if (remoteJson === lastAppliedRemoteJson) return;
+                    const localJson = JSON.stringify(collectLocalTrackerData());
+                    if (remoteJson === localJson) {
+                        lastAppliedRemoteJson = remoteJson;
+                        return;
+                    }
+                    lastAppliedRemoteJson = remoteJson;
+                    applyRemoteData(newData);
+                    setDot('#22c55e');
+                    if (syncText) syncText.textContent = 'Updated from partner';
+                    location.reload();
+                }
+            })
+            .subscribe();
+    }
+
+    (async function start() {
+        await pullFromSupabase({ reloadIfChanged: true });
+        subscribeRealtime();
+    })();
+</script>
+<div class="container">
+<div id="pageMeds">
+
+    <div class="header">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+                <h1>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+                        <path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"></path>
+                        <path d="m8.5 8.5 7 7"></path>
+                    </svg>
+                    Pregnancy Medication Schedule
+                </h1>
+                <p>Daily medication plan — organized by time and food timing</p>
+            </div>
+            <button id="navToJourney" style="flex-shrink:0; font-size:11.5px; font-weight:600; color:#B15F73; background:rgba(255,255,255,0.7); text-decoration:none; border:1px solid #C97F91; padding:7px 12px; border-radius:20px; white-space:nowrap; cursor:pointer; font-family:inherit;">Pregnancy Journey →</button>
+        </div>
+        <div id="syncStatus">
+            <span id="syncDot" style="width:7px; height:7px; border-radius:50%; background:#ffca28; flex-shrink:0;"></span>
+            <span id="syncText">Connecting…</span>
+        </div>
+    </div>
+
+    <div class="tracker">
+        <div class="tracker-top">
+            <span class="tracker-date" id="trackerDate">Today</span>
+            <span class="tracker-count" id="trackerCount">0 / 10 taken</span>
+        </div>
+        <div class="tracker-bar-track">
+            <div class="tracker-bar-fill" id="trackerBar"></div>
+        </div>
+        <div class="tracker-msg" id="trackerMsg">Tap a medicine card to mark it as taken</div>
+        <div class="tracker-actions">
+            <span class="tracker-reset" id="trackerReset">Reset today's ticks</span>
+            <span class="tracker-reset" id="exportBtn">Download backup (.json)</span>
+            <label class="tracker-reset" for="importInput">Restore from backup</label>
+            <input type="file" id="importInput" accept="application/json" style="display:none;">
+        </div>
+    </div>
+
+    <div class="history">
+        <div class="history-title" id="historyToggle">
+            <span>Last 7 days</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="history-body" id="historyBody">
+            <div id="historyList"></div>
+            <div class="med-grid-wrap">
+                <div class="med-grid-label">By medicine</div>
+                <div class="med-grid-header" id="medGridHeader"></div>
+                <div id="medGridBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab" data-filter="morning">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v8"></path>
+                <path d="m4.93 10.93 1.41 1.41"></path>
+                <path d="M2 18h2"></path>
+                <path d="M20 18h2"></path>
+                <path d="m19.07 10.93-1.41 1.41"></path>
+                <path d="M22 22H2"></path>
+                <path d="m16 6-4 4-4-4"></path>
+                <path d="M16 18a4 4 0 0 0-8 0"></path>
+            </svg>
+            Morning
+        </button>        <button class="filter-tab" data-filter="afternoon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+            Afternoon
+        </button>
+        <button class="filter-tab" data-filter="evening">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 18a5 5 0 0 0-10 0"></path>
+                <line x1="12" y1="2" x2="12" y2="9"></line>
+                <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+                <line x1="1" y1="18" x2="3" y2="18"></line>
+                <line x1="21" y1="18" x2="23" y2="18"></line>
+                <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+                <line x1="23" y1="22" x2="1" y2="22"></line>
+                <line x1="8" y1="6" x2="16" y2="6"></line>
+            </svg>
+            Evening
+        </button>
+        <button class="filter-tab" data-filter="night">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+            Night
+        </button>
+    </div>
+
+    <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 7v5l3 3"></path>
+        </svg>
+        <p>Select a time above to view your medicines</p>
+        <span>Tap Morning, Afternoon, Evening or Night</span>
+    </div>
+
+    <!-- MORNING -->
+    <section class="time-section hidden" data-section="morning">
+        <div class="time-header">
+            <div class="time-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v8"></path>
+                    <path d="m4.93 10.93 1.41 1.41"></path>
+                    <path d="M2 18h2"></path>
+                    <path d="M20 18h2"></path>
+                    <path d="m19.07 10.93-1.41 1.41"></path>
+                    <path d="M22 22H2"></path>
+                    <path d="m16 6-4 4-4-4"></path>
+                    <path d="M16 18a4 4 0 0 0-8 0"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="time-title">Morning</div>
+                <div class="time-subtitle">Start your day with these medicines</div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="aciloc">
+            <div class="medicine-number">01</div>
+            <div>
+                <div class="medicine-name">Aciloc RD 20</div>
+                <div class="medicine-generic">Omeprazole 20mg + Domperidone 10mg<br><strong>Brand:</strong> Cadila</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Reduces acidity and helps with digestion.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge before-food">BEFORE FOOD</span>
+                <div class="timing-label">Take before breakfast</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="periset">
+            <div class="medicine-number">02</div>
+            <div>
+                <div class="medicine-name">Periset 4</div>
+                <div class="medicine-generic">Ondansetron</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Helps control nausea and vomiting.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge before-food">BEFORE FOOD</span>
+                <div class="timing-label">Before breakfast</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="triptofer">
+            <div class="medicine-number">03</div>
+            <div>
+                <div class="medicine-name">Triptofer</div>
+                <div class="medicine-generic">Ferrous Ascorbate + Folic Acid + Zinc</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Iron and folic acid supplementation for anemia.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After breakfast</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="ceftas-morning">
+            <div class="medicine-number">04</div>
+            <div>
+                <div class="medicine-name">Ceftas 200</div>
+                <div class="medicine-generic">Cefixime Dispersible 200mg<br><strong>Brand:</strong> Intas</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Antibiotic prescribed for UTI.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After breakfast</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AFTERNOON -->
+    <section class="time-section hidden" data-section="afternoon">
+        <div class="time-header">
+            <div class="time-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m6.34 17.66-1.41 1.41"></path>
+                    <path d="m19.07 4.93-1.41 1.41"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="time-title">Afternoon</div>
+                <div class="time-subtitle">Take these medicines after lunch</div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="ecosprin">
+            <div class="medicine-number">05</div>
+            <div>
+                <div class="medicine-name">Ecosprin 150</div>
+                <div class="medicine-generic">Aspirin 150mg</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Prescribed to support uterine blood flow.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After lunch</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="cccal">
+            <div class="medicine-number">06</div>
+            <div>
+                <div class="medicine-name">CC-CAL</div>
+                <div class="medicine-generic">Calcium Citrate + Magnesium + Zinc + Vitamin D3</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Calcium and vitamin D supplementation.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After lunch</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="omega3">
+            <div class="medicine-number">07</div>
+            <div>
+                <div class="medicine-name">Omega-3 / Apex</div>
+                <div class="medicine-generic">Marine Triglycerides + Methylcobalamin</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Omega-3 supplementation for pregnancy nutrition.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After lunch</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EVENING -->
+    <section class="time-section hidden" data-section="evening">
+        <div class="time-header">
+            <div class="time-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 18a5 5 0 0 0-10 0"></path>
+                    <line x1="12" y1="2" x2="12" y2="9"></line>
+                    <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+                    <line x1="1" y1="18" x2="3" y2="18"></line>
+                    <line x1="21" y1="18" x2="23" y2="18"></line>
+                    <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+                    <line x1="23" y1="22" x2="1" y2="22"></line>
+                    <line x1="8" y1="6" x2="16" y2="6"></line>
+                </svg>
+            </div>
+            <div>
+                <div class="time-title">Evening</div>
+                <div class="time-subtitle">Take between 5:00 – 6:30 PM</div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="argitas">
+            <div class="medicine-number">10</div>
+            <div>
+                <div class="medicine-name">Argitas</div>
+                <div class="medicine-generic">L-Arginine, Zinc &amp; Folic Acid Granules (20 x 10g)<br><strong>Brand:</strong> Intas</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Sachet, orange flavour, sugar free. Mix one sachet in water and drink between 5:00–6:30 PM.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge evening-time">5:00–6:30 PM</span>
+                <div class="timing-label">One sachet in water</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NIGHT -->
+    <section class="time-section hidden" data-section="night">
+        <div class="time-header">
+            <div class="time-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="time-title">Night</div>
+                <div class="time-subtitle">Take these medicines after dinner</div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="unimag">
+            <div class="medicine-number">08</div>
+            <div>
+                <div class="medicine-name">Unimag 100</div>
+                <div class="medicine-generic">Magnesium Bisglycinate</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Magnesium supplementation and muscle relaxation.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After dinner</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="soligest">
+            <div class="medicine-number">09</div>
+            <div>
+                <div class="medicine-name">Soligest SR 200</div>
+                <div class="medicine-generic">Progesterone 200mg</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Progesterone hormonal support during pregnancy.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After dinner</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="ceftas-night">
+            <div class="medicine-number">04</div>
+            <div>
+                <div class="medicine-name">Ceftas 200</div>
+                <div class="medicine-generic">Cefixime Dispersible 200mg<br><strong>Brand:</strong> Intas</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Antibiotic prescribed for UTI.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After dinner</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="note">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5d4037" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <path d="M12 9v4"></path>
+            <path d="M12 17h.01"></path>
+        </svg>
+        <strong>Important:</strong>
+        Take medicines exactly according to your doctor's prescription.
+        Do not change the dosage, timing, or stop any medicine without
+        consulting your doctor.
+    </div>
+
+</div><!-- /pageMeds -->
+
+<div id="pageJourney">
+
+<div class="jr-container">
+
+    <div class="jr-header">
+        <div class="jr-header-top">
+            <div>
+                <h1>Pregnancy Journey</h1>
+                <p id="headerSub">Tracking every month, together</p>
+            </div>
+            <button id="navToMeds" class="jr-nav-link" style="background:transparent; cursor:pointer; font-family:inherit;">← Medication tracker</button>
+        </div>
+
+        <div class="jr-journey-bar">
+            <div class="jr-journey-track" id="journeyTrack"></div>
+            <div class="jr-journey-caption">
+                <span id="captionLeft">Month 1</span>
+                <span id="captionRight">Month 9 · Due</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="jr-month-menu" id="monthMenu"></div>
+
+    <div class="jr-month-panel" id="monthPanel"></div>
+
+    <div class="jr-footer-note">Everything here is saved privately on this device · use the medication tracker's backup button to export a copy</div>
+</div>
+
+
+
+</div><!-- /pageJourney -->
+
+</div><!-- /container -->
+
+<script>
+    // ---- Toast notifications ----
+    function showToast(message, kind) {
+        kind = kind || 'default';
+        let host = document.getElementById('toastHost');
+        if (!host) {
+            host = document.createElement('div');
+            host.id = 'toastHost';
+            host.style.cssText = 'position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:2000; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none;';
+            document.body.appendChild(host);
+        }
+        const colors = {
+            default: { bg: '#FFFEFB', border: '#E7DFCE', text: '#362F2A' },
+            success: { bg: '#E8EEE3', border: '#7C9473', text: '#3F5237' },
+            error: { bg: '#FBEAEA', border: '#D98A8A', text: '#7A2E2E' }
+        };
+        const c = colors[kind] || colors.default;
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText =
+            'background:' + c.bg + '; border:1px solid ' + c.border + '; color:' + c.text + ';' +
+            'padding:10px 16px; border-radius:20px; font-size:12.5px; font-weight:600;' +
+            'box-shadow:0 8px 24px rgba(54,47,42,0.15); opacity:0; transform:translateY(8px);' +
+            'transition:opacity 0.25s ease, transform 0.25s ease; max-width:88vw; text-align:center;';
+        host.appendChild(toast);
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(8px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 2600);
+    }
+    window.showToast = showToast;
+
+    const tabs = document.querySelectorAll('.filter-tab');
+    const sections = document.querySelectorAll('.time-section');
+    const emptyState = document.getElementById('emptyState');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const alreadyActive = tab.classList.contains('active');
+            tabs.forEach(t => t.classList.remove('active'));
+
+            if (alreadyActive) {
+                sections.forEach(section => section.classList.add('hidden'));
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            tab.classList.add('active');
+            emptyState.classList.add('hidden');
+            const filter = tab.dataset.filter;
+
+            sections.forEach(section => {
+                if (section.dataset.section === filter) {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        });
+    });
+
+    // ---- Daily tracker ----
+    const cards = document.querySelectorAll('.medicine-card[data-id]');
+    const trackerDate = document.getElementById('trackerDate');
+    const trackerCount = document.getElementById('trackerCount');
+    const trackerBar = document.getElementById('trackerBar');
+    const trackerMsg = document.getElementById('trackerMsg');
+    const trackerReset = document.getElementById('trackerReset');
+
+    const todayKey = new Date().toISOString().slice(0, 10); // e.g. 2026-08-08
+    const storageKey = 'medTracker_' + todayKey;
+
+    const todayLabel = new Date().toLocaleDateString(undefined, {
+        weekday: 'long', month: 'short', day: 'numeric'
+    });
+    trackerDate.textContent = todayLabel;
+
+    function loadTakenState() {
+        try {
+            return JSON.parse(localStorage.getItem(storageKey)) || {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function saveTakenState(state) {
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+        } catch (e) {}
+    }
+
+    let takenState = loadTakenState();
+    let celebratedToday = false;
+
+    function updateProgress() {
+        const total = cards.length;
+        const taken = Object.values(takenState).filter(Boolean).length;
+        trackerCount.textContent = taken + ' / ' + total + ' taken';
+        trackerBar.style.width = (taken / total * 100) + '%';
+
+        if (taken === 0) {
+            trackerMsg.textContent = 'Tap a medicine card to mark it as taken';
+            celebratedToday = false;
+        } else if (taken === total) {
+            trackerMsg.textContent = 'All done for today! Great job.';
+            if (!celebratedToday && typeof showToast === 'function') {
+                showToast('All medicines taken for today 🎉', 'success');
+                celebratedToday = true;
+            }
+        } else {
+            trackerMsg.textContent = (total - taken) + ' medicine' + (total - taken === 1 ? '' : 's') + ' left for today';
+        }
+    }
+
+    function applyCardState(card) {
+        const id = card.dataset.id;
+        if (takenState[id]) {
+            card.classList.add('taken');
+        } else {
+            card.classList.remove('taken');
+        }
+    }
+
+    cards.forEach(card => {
+        applyCardState(card);
+
+        card.addEventListener('click', () => {
+            const id = card.dataset.id;
+            takenState[id] = !takenState[id];
+            saveTakenState(takenState);
+            applyCardState(card);
+            updateProgress();
+            renderHistory();
+            renderMedGrid();
+        });
+    });
+
+    updateProgress();
+
+    // ---- Backup export / import ----
+    const exportBtn = document.getElementById('exportBtn');
+    const importInput = document.getElementById('importInput');
+
+    exportBtn.addEventListener('click', () => {
+        const backup = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('medTracker_')) {
+                try { backup[k] = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+            }
+        }
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'medication-tracker-backup-' + todayKey + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Backup downloaded', 'success');
+    });
+
+    importInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const data = JSON.parse(evt.target.result);
+                Object.keys(data).forEach(k => {
+                    if (k.startsWith('medTracker_')) {
+                        localStorage.setItem(k, JSON.stringify(data[k]));
+                    }
+                });
+                takenState = loadTakenState();
+                cards.forEach(applyCardState);
+                updateProgress();
+                renderHistory();
+                renderMedGrid();
+                trackerMsg.textContent = 'Backup restored successfully.';
+                showToast('Backup restored', 'success');
+            } catch (err) {
+                trackerMsg.textContent = 'Could not read that backup file.';
+                showToast('Could not read that file', 'error');
+            }
+        };
+        reader.readAsText(file);
+        importInput.value = '';
+    });
+
+    trackerReset.addEventListener('click', () => {
+        takenState = {};
+        saveTakenState(takenState);
+        cards.forEach(applyCardState);
+        updateProgress();
+        renderHistory();
+        renderMedGrid();
+        showToast("Today's ticks reset");
+    });
+
+    // ---- Per-medicine 7-day grid ----
+    function renderMedGrid() {
+        const header = document.getElementById('medGridHeader');
+        const body = document.getElementById('medGridBody');
+        header.innerHTML = '<span></span>';
+        body.innerHTML = '';
+
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push(d);
+        }
+
+        days.forEach((d, idx) => {
+            const label = idx === 6 ? 'Tdy' : d.toLocaleDateString(undefined, { weekday: 'narrow' });
+            header.innerHTML += '<span>' + label + '</span>';
+        });
+
+        cards.forEach(card => {
+            const id = card.dataset.id;
+            const name = card.querySelector('.medicine-name').textContent;
+
+            const row = document.createElement('div');
+            row.className = 'med-grid-row';
+            let html = '<span class="med-grid-name">' + name + '</span>';
+
+            days.forEach((d, idx) => {
+                const key = 'medTracker_' + d.toISOString().slice(0, 10);
+                let taken = false;
+                try {
+                    const state = JSON.parse(localStorage.getItem(key)) || {};
+                    taken = !!state[id];
+                } catch (e) {}
+                const todayCls = idx === 6 ? ' today-col' : '';
+                html += '<span class="med-grid-dot' + (taken ? ' taken' : '') + todayCls + '"></span>';
+            });
+
+            row.innerHTML = html;
+            body.appendChild(row);
+        });
+    }
+
+    // ---- 7-day history ----
+    function renderHistory() {
+        const historyList = document.getElementById('historyList');
+        const total = cards.length;
+        historyList.innerHTML = '';
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = 'medTracker_' + d.toISOString().slice(0, 10);
+
+            let count = 0;
+            try {
+                const state = JSON.parse(localStorage.getItem(key)) || {};
+                count = Object.values(state).filter(Boolean).length;
+            } catch (e) {}
+
+            const label = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+            const pct = total ? Math.round((count / total) * 100) : 0;
+
+            let barClass = 'none';
+            if (count > 0 && count < total) barClass = 'partial';
+            if (count >= total && total > 0) barClass = 'complete';
+
+            const row = document.createElement('div');
+            row.className = 'history-row';
+            row.innerHTML =
+                '<span class="history-day' + (i === 0 ? ' today' : '') + '">' + label + '</span>' +
+                '<span class="history-bar-track"><span class="history-bar-fill ' + barClass + '" style="width:' + pct + '%"></span></span>' +
+                '<span class="history-count">' + count + '/' + total + '</span>';
+            historyList.appendChild(row);
+        }
+    }
+
+    renderHistory();
+    renderMedGrid();
+
+    const historyToggle = document.getElementById('historyToggle');
+    const historyBody = document.getElementById('historyBody');
+
+    historyToggle.addEventListener('click', () => {
+        historyToggle.classList.toggle('open');
+        historyBody.classList.toggle('open');
+    });
+</script>
+<script>
+(function() {
+
+    const MONTHS = [
+        { n: 1, weeks: 'Weeks 1–4',  desc: 'The very beginning — implantation and the first missed period. Early prenatal vitamins usually start here.' },
+        { n: 2, weeks: 'Weeks 5–8',  desc: 'Morning sickness may begin. First ultrasound and confirmation of due date often happen this month.' },
+        { n: 3, weeks: 'Weeks 9–13', desc: 'End of the first trimester. Nausea often starts easing. NT scan / first trimester screening usually done.' },
+        { n: 4, weeks: 'Weeks 14–17', desc: 'Second trimester begins — energy often improves. Anomaly scan window opens up soon.' },
+        { n: 5, weeks: 'Weeks 18–21', desc: 'Anomaly scan (level 2 ultrasound) typically happens. Baby movements may start being felt.' },
+        { n: 6, weeks: 'Weeks 22–26', desc: 'Glucose screening test window. Baby is growing steadily and kicks become more noticeable.' },
+        { n: 7, weeks: 'Weeks 27–30', desc: 'Third trimester begins. Regular growth scans and more frequent doctor visits.' },
+        { n: 8, weeks: 'Weeks 31–35', desc: 'Baby gains weight quickly. Hospital bag and birth plan discussions usually happen.' },
+        { n: 9, weeks: 'Weeks 36–40', desc: 'Final stretch — weekly checkups, monitoring for labor signs, and getting ready to meet the baby.' }
+    ];
+
+    // Current month is derived from the date you told me: Month 6 begins Aug 19, 2026.
+    const MONTH6_START = new Date('2026-08-19T00:00:00');
+    const MS_PER_MONTH = 1000 * 60 * 60 * 24 * 30.4; // approx
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+    // Month 9 runs weeks 36–40; approximate due date as the end of month 9.
+    const ESTIMATED_DUE_DATE = new Date(MONTH6_START.getTime() + 3.5 * MS_PER_MONTH);
+
+    function getCurrentMonth() {
+        const now = new Date();
+        const diff = now.getTime() - MONTH6_START.getTime();
+        const offset = Math.floor(diff / MS_PER_MONTH);
+        let month = 6 + offset;
+        if (month < 1) month = 1;
+        if (month > 9) month = 9;
+        return month;
+    }
+
+    const currentMonth = getCurrentMonth();
+    let activeMonth = currentMonth;
+
+    const daysToDue = Math.max(0, Math.round((ESTIMATED_DUE_DATE.getTime() - Date.now()) / MS_PER_DAY));
+    const dueDateLabel = ESTIMATED_DUE_DATE.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+    document.getElementById('headerSub').textContent =
+        'Month ' + currentMonth + ' of 9 · roughly ' + daysToDue + ' days to go · estimated arrival ' + dueDateLabel;
+
+    // ---- Trimester / month progress bar ----
+    const track = document.getElementById('journeyTrack');
+    MONTHS.forEach(m => {
+        const seg = document.createElement('div');
+        seg.className = 'jr-journey-seg' + (m.n < currentMonth ? ' jr-done' : m.n === currentMonth ? ' jr-current' : '');
+        track.appendChild(seg);
+    });
+
+    // ---- Month menu ----
+    const menu = document.getElementById('monthMenu');
+    function renderMenu() {
+        menu.innerHTML = '';
+        MONTHS.forEach(m => {
+            const btn = document.createElement('button');
+            btn.className = 'jr-month-btn' + (m.n === activeMonth ? ' jr-active' : '') + (m.n === currentMonth ? ' jr-today-marker' : '');
+            btn.textContent = 'M' + m.n;
+            btn.addEventListener('click', () => {
+                activeMonth = m.n;
+                renderMenu();
+                renderPanel();
+            });
+            menu.appendChild(btn);
+        });
+    }
+
+    // ---- Storage helpers ----
+    function storageKey(month, section) {
+        return 'journey_m' + month + '_' + section;
+    }
+
+    function loadValue(key, fallback) {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch (e) { return fallback; }
+    }
+
+    function saveValue(key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    }
+
+    // ---- Month panel ----
+    const panel = document.getElementById('monthPanel');
+    let activeSection = 'notes';
+
+    const SECTIONS = [
+        { id: 'notes', label: 'Notes', icon: '<path d="M4 4h16v16H4z"></path><path d="M8 9h8M8 13h5"></path>' },
+        { id: 'prescriptions', label: 'Prescriptions', icon: '<path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"></path><path d="m8.5 8.5 7 7"></path>' },
+        { id: 'reports', label: 'Reports', icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path>' },
+        { id: 'photos', label: 'Photos', icon: '<rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-5-5L5 21"></path>' }
+    ];
+
+    function renderPanel() {
+        const m = MONTHS.find(x => x.n === activeMonth);
+        const isFirst = activeMonth === 1;
+        const isLast = activeMonth === 9;
+        panel.innerHTML = `
+            <div class="jr-month-title-row">
+                <button id="prevMonthBtn" class="jr-month-nav-arrow" ${isFirst ? 'disabled' : ''} aria-label="Previous month">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div style="flex:1;">
+                    <span class="jr-month-title">Month ${m.n}</span>
+                    <span class="jr-month-weeks">${m.weeks}</span>
+                </div>
+                <button id="nextMonthBtn" class="jr-month-nav-arrow" ${isLast ? 'disabled' : ''} aria-label="Next month">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+            <div class="jr-month-desc">${m.desc}</div>
+            <div class="jr-section-tabs" id="sectionTabs"></div>
+            <div id="sectionPanels"></div>
+        `;
+
+        const prevBtn = document.getElementById('prevMonthBtn');
+        const nextBtn = document.getElementById('nextMonthBtn');
+        if (prevBtn) prevBtn.addEventListener('click', () => {
+            if (activeMonth > 1) { activeMonth--; renderMenu(); renderPanel(); }
+        });
+        if (nextBtn) nextBtn.addEventListener('click', () => {
+            if (activeMonth < 9) { activeMonth++; renderMenu(); renderPanel(); }
+        });
+
+        const tabsWrap = document.getElementById('sectionTabs');
+        const panelsWrap = document.getElementById('sectionPanels');
+
+        SECTIONS.forEach(sec => {
+            const tab = document.createElement('button');
+            tab.className = 'jr-section-tab' + (sec.id === activeSection ? ' jr-active' : '');
+            tab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${sec.icon}</svg>${sec.label}`;
+            tab.addEventListener('click', () => {
+                activeSection = sec.id;
+                renderPanel();
+            });
+            tabsWrap.appendChild(tab);
+
+            const secPanel = document.createElement('div');
+            secPanel.className = 'jr-section-panel' + (sec.id === activeSection ? ' jr-active' : '');
+            secPanel.id = 'panel-' + sec.id;
+            panelsWrap.appendChild(secPanel);
+        });
+
+        renderNotes();
+        renderList('prescriptions', 'Add a medicine or prescription note');
+        renderList('reports', 'Add a report name or finding');
+        renderPhotos();
+    }
+
+    function renderNotes() {
+        const key = storageKey(activeMonth, 'notes');
+        const el = document.getElementById('panel-notes');
+        const value = loadValue(key, '');
+        el.innerHTML = `
+            <textarea class="jr-notes-area" id="notesArea" placeholder="How is she feeling this month? Any symptoms, doctor visit notes, cravings, appointments...">${value}</textarea>
+            <div class="jr-save-hint">Saved automatically as you type</div>
+        `;
+        const area = document.getElementById('notesArea');
+        area.addEventListener('input', () => {
+            saveValue(key, area.value);
+        });
+    }
+
+    function renderList(section, placeholder) {
+        const key = storageKey(activeMonth, section);
+        const el = document.getElementById('panel-' + section);
+        let items = loadValue(key, []);
+
+        function draw() {
+            let html = '<div class="jr-item-list" id="list-' + section + '">';
+            items.forEach((val, idx) => {
+                html += `
+                    <div class="jr-item-row">
+                        <input type="text" value="${escapeHtml(val)}" data-idx="${idx}" placeholder="${placeholder}">
+                        <button class="jr-item-remove" data-idx="${idx}">×</button>
+                    </div>`;
+            });
+            html += '</div><button class="jr-add-item-btn" id="add-' + section + '">+ Add</button>';
+            el.innerHTML = html;
+
+            el.querySelectorAll('input[type="text"]').forEach(inp => {
+                inp.addEventListener('input', () => {
+                    items[+inp.dataset.idx] = inp.value;
+                    saveValue(key, items);
+                });
+            });
+
+            el.querySelectorAll('.item-remove').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    items.splice(+btn.dataset.idx, 1);
+                    saveValue(key, items);
+                    draw();
+                });
+            });
+
+            document.getElementById('add-' + section).addEventListener('click', () => {
+                items.push('');
+                saveValue(key, items);
+                draw();
+                const inputs = el.querySelectorAll('input[type="text"]');
+                if (inputs.length) inputs[inputs.length - 1].focus();
+            });
+        }
+
+        draw();
+    }
+
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function renderPhotos() {
+        const key = storageKey(activeMonth, 'photos');
+        const el = document.getElementById('panel-photos');
+        let photos = loadValue(key, []); // array of {name, dataUrl}
+
+        function draw() {
+            let html = '<div class="jr-photo-grid">';
+            photos.forEach((p, idx) => {
+                html += `
+                    <div class="jr-photo-thumb">
+                        <img src="${p.dataUrl}" alt="${escapeHtml(p.name)}">
+                        <button class="jr-photo-remove" data-idx="${idx}">×</button>
+                    </div>`;
+            });
+            html += `
+                <label class="jr-photo-upload-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        <circle cx="9" cy="9" r="2"></circle>
+                        <path d="m21 15-5-5L5 21"></path>
+                    </svg>
+                    Add photo
+                    <input type="file" accept="image/*" multiple style="display:none;" id="photoInput">
+                </label>
+            `;
+            html += '</div>';
+            html += `<div class="jr-github-hint"><strong>Want these saved permanently on GitHub?</strong> Tap a photo, save it to your phone/computer, then in your GitHub repo create a folder <code>images/month-${activeMonth}/</code> and upload it there via "Add file → Upload files". This page keeps a working copy on this device so you can view it anytime.</div>`;
+
+            el.innerHTML = html;
+
+            el.querySelectorAll('.photo-remove').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    photos.splice(+btn.dataset.idx, 1);
+                    saveValue(key, photos);
+                    draw();
+                });
+            });
+
+            document.getElementById('photoInput').addEventListener('change', (e) => {
+                const files = Array.from(e.target.files || []);
+                let remaining = files.length;
+                if (!remaining) return;
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        photos.push({ name: file.name, dataUrl: evt.target.result });
+                        remaining--;
+                        if (remaining === 0) {
+                            saveValue(key, photos);
+                            draw();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        }
+
+        draw();
+    }
+
+    renderMenu();
+    renderPanel();
+})();
+
+</script>
+
+<script>
+(function(){
+    var navToJourney = document.getElementById('navToJourney');
+    var navToMeds = document.getElementById('navToMeds');
+    var pageMeds = document.getElementById('pageMeds');
+    var pageJourney = document.getElementById('pageJourney');
+    if (navToJourney) {
+        navToJourney.addEventListener('click', function() {
+            pageMeds.classList.add('jr-hidden');
+            pageJourney.classList.add('jr-visible');
+            window.scrollTo(0,0);
+        });
+    }
+    if (navToMeds) {
+        navToMeds.addEventListener('click', function() {
+            pageJourney.classList.remove('jr-visible');
+            pageMeds.classList.remove('jr-hidden');
+            window.scrollTo(0,0);
+        });
+    }
+})();
+</script>
+</body>
+</html>
