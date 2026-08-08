@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pregnancy Medication Schedule</title>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f7fb;
+            color: #263238;
+            padding: 12px;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        .header {
+            background: linear-gradient(135deg, #7c4dff, #536dfe);
+            color: white;
+            padding: 16px 18px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 6px 18px rgba(83, 109, 254, 0.2);
+        }
+
+        .header h1 { font-size: 20px; margin-bottom: 3px; }
+        .header p { font-size: 12.5px; opacity: 0.9; }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            background: white;
+            padding: 5px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            overflow-x: auto;
+        }
+
+        .filter-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 9px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #78909c;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.25s ease, color 0.25s ease, transform 0.15s ease;
+        }
+
+        .filter-tab svg {
+            width: 15px;
+            height: 15px;
+            stroke: currentColor;
+            transition: transform 0.25s ease;
+        }
+
+        .filter-tab:hover { background: #f0ecff; color: #6847d9; }
+        .filter-tab:active { transform: scale(0.96); }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, #7c4dff, #536dfe);
+            color: white;
+            box-shadow: 0 4px 14px rgba(83, 109, 254, 0.35);
+        }
+
+        .filter-tab.active svg { transform: rotate(-8deg) scale(1.1); }
+
+        .time-section {
+            margin-bottom: 14px;
+            transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.4s ease;
+            overflow: hidden;
+        }
+
+        .time-section.hidden {
+            opacity: 0;
+            transform: translateY(-8px);
+            max-height: 0;
+            margin-bottom: 0;
+            pointer-events: none;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .time-section:not(.hidden) { animation: fadeInUp 0.5s ease both; }
+
+        .time-header {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 8px;
+        }
+
+        .time-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            flex-shrink: 0;
+        }
+
+        .time-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: #536dfe;
+        }
+
+        .time-title { font-size: 16px; font-weight: 700; }
+        .time-subtitle { color: #78909c; font-size: 11.5px; margin-top: 1px; }
+
+        .medicine-card {
+            background: white;
+            border-radius: 13px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            display: grid;
+            grid-template-columns: 42px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border: 1px solid #edf0f5;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            animation: fadeInUp 0.5s ease both;
+        }
+
+        .medicine-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(83, 109, 254, 0.14);
+            border-color: #d6ceff;
+        }
+
+        .medicine-card:active { transform: translateY(-1px) scale(0.99); }
+
+        .medicine-card:nth-child(2) { animation-delay: 0.05s; }
+        .medicine-card:nth-child(3) { animation-delay: 0.1s; }
+        .medicine-card:nth-child(4) { animation-delay: 0.15s; }
+        .medicine-card:nth-child(5) { animation-delay: 0.2s; }
+
+        .medicine-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+            background: #f0ecff;
+            color: #6847d9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+            overflow: hidden;
+        }
+
+        .medicine-number img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 14px;
+        }
+
+        .medicine-card:hover .medicine-number {
+            background: linear-gradient(135deg, #7c4dff, #536dfe);
+            color: white;
+            transform: rotate(-6deg) scale(1.06);
+        }
+
+        .medicine-name { font-size: 15px; font-weight: 700; color: #263238; margin-bottom: 2px; }
+        .medicine-generic { font-size: 11.5px; color: #607d8b; margin-bottom: 4px; line-height: 1.35; }
+        .medicine-purpose { font-size: 11.5px; color: #546e7a; line-height: 1.4; }
+        .medicine-purpose strong { color: #37474f; }
+
+        .timing {
+            text-align: center;
+            min-width: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .timing-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 18px;
+            font-size: 10.5px;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .before-food { background: #fff3e0; color: #e65100; }
+        .after-food { background: #e8f5e9; color: #2e7d32; }
+        .evening-time { background: #ede7f6; color: #5e35b1; }
+        .timing-label { font-size: 10.5px; color: #90a4ae; }
+
+        .medicine-card:hover .timing-badge { transform: scale(1.06); }
+        .timing-badge { transition: transform 0.2s ease; }
+
+        .medicine-card.taken {
+            background: #f6fbf7;
+            border-color: #cdeed4;
+        }
+
+        .medicine-card.taken .medicine-name { color: #2e7d32; }
+
+        .check-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #cfd8e3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+
+        .check-circle svg {
+            width: 13px;
+            height: 13px;
+            stroke: white;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .medicine-card.taken .check-circle {
+            background: #43a047;
+            border-color: #43a047;
+        }
+
+        .medicine-card.taken .check-circle svg { opacity: 1; }
+
+        .check-circle:active { transform: scale(0.88); }
+
+        /* Progress Tracker */
+        .tracker {
+            background: white;
+            border-radius: 13px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            animation: fadeInUp 0.5s ease both;
+        }
+
+        .tracker-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+
+        .tracker-date { font-size: 11.5px; color: #90a4ae; font-weight: 600; }
+
+        .tracker-count { font-size: 13px; font-weight: 700; color: #6847d9; }
+
+        .tracker-bar-track {
+            width: 100%;
+            height: 8px;
+            background: #eef1f7;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .tracker-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #7c4dff, #536dfe);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        .tracker-msg {
+            font-size: 11px;
+            color: #90a4ae;
+            margin-top: 7px;
+        }
+
+        .tracker-reset {
+            font-size: 10.5px;
+            color: #b39ddb;
+            margin-top: 4px;
+            cursor: pointer;
+            display: inline-block;
+            text-decoration: underline;
+        }
+
+        .tracker-reset:hover { color: #7c4dff; }
+
+        .tracker-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 6px;
+        }
+
+        .tracker-actions .tracker-reset { margin-top: 0; }
+
+        /* History */
+        .history {
+            background: white;
+            border-radius: 13px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            animation: fadeInUp 0.5s ease both;
+        }
+
+        .history-title {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #37474f;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .history-title svg {
+            width: 15px;
+            height: 15px;
+            stroke: #90a4ae;
+            transition: transform 0.25s ease;
+        }
+
+        .history-title.open svg { transform: rotate(180deg); }
+
+        .history-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+        }
+
+        .history-body.open { max-height: 400px; margin-top: 10px; }
+
+        .history-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+        }
+
+        .history-day {
+            width: 62px;
+            font-size: 11px;
+            color: #78909c;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .history-day.today { color: #6847d9; }
+
+        .history-bar-track {
+            flex: 1;
+            height: 7px;
+            background: #eef1f7;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .history-bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.4s ease;
+        }
+
+        .history-bar-fill.complete { background: linear-gradient(90deg, #43a047, #66bb6a); }
+        .history-bar-fill.partial { background: linear-gradient(90deg, #ffb300, #ffca28); }
+        .history-bar-fill.none { background: #e0e0e0; }
+
+        .history-count {
+            width: 40px;
+            text-align: right;
+            font-size: 11px;
+            font-weight: 700;
+            color: #607d8b;
+            flex-shrink: 0;
+        }
+
+        /* Per-medicine grid */
+        .med-grid-wrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eef1f7; }
+
+        .med-grid-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #90a4ae;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .med-grid-header {
+            display: grid;
+            grid-template-columns: 1fr repeat(7, 22px);
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+
+        .med-grid-header span {
+            font-size: 9.5px;
+            color: #b0bec5;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .med-grid-row {
+            display: grid;
+            grid-template-columns: 1fr repeat(7, 22px);
+            gap: 4px;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .med-grid-name {
+            font-size: 11px;
+            color: #455a64;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 4px;
+        }
+
+        .med-grid-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 5px;
+            background: #eef1f7;
+            margin: 0 auto;
+        }
+
+        .med-grid-dot.taken { background: #43a047; }
+        .med-grid-dot.today-col { box-shadow: 0 0 0 2px #d6ceff; }
+
+        .empty-state {
+            text-align: center;
+            padding: 28px 16px;
+            color: #90a4ae;
+            animation: fadeInUp 0.5s ease both;
+        }
+
+        .empty-state svg {
+            width: 38px;
+            height: 38px;
+            stroke: #b3c1e0;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            font-weight: 600;
+            color: #78909c;
+        }
+
+        .empty-state span {
+            font-size: 11.5px;
+            color: #b0bec5;
+            display: block;
+            margin-top: 3px;
+        }
+
+        .empty-state.hidden { display: none; }
+
+        .header { animation: fadeInUp 0.5s ease both; }
+        .filter-tabs { animation: fadeInUp 0.5s ease 0.05s both; }
+        .note { animation: fadeInUp 0.5s ease 0.1s both; }
+
+        .note {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 12px;
+            padding: 11px 14px;
+            margin-top: 6px;
+            color: #6d4c41;
+            font-size: 11.5px;
+            line-height: 1.5;
+        }
+
+        .note strong { color: #5d4037; }
+
+        @media (max-width: 750px) {
+            body { padding: 10px; }
+            .header { padding: 14px 16px; }
+            .header h1 { font-size: 18px; }
+            .medicine-card { grid-template-columns: 38px 1fr; gap: 10px; }
+            .medicine-number { width: 38px; height: 38px; }
+            .timing { grid-column: 2; text-align: left; align-items: flex-start; flex-direction: row; gap: 8px; }
+        }
+
+        @media (max-width: 480px) {
+            .header { border-radius: 12px; }
+            .header h1 { font-size: 17px; }
+            .time-title { font-size: 14.5px; }
+            .medicine-card { padding: 10px 12px; }
+            .medicine-name { font-size: 13.5px; }
+            .medicine-generic { font-size: 10.5px; }
+            .medicine-purpose { font-size: 10.5px; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+                <path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"></path>
+                <path d="m8.5 8.5 7 7"></path>
+            </svg>
+            Pregnancy Medication Schedule
+        </h1>
+        <p>Daily medication plan — organized by time and food timing</p>
+    </div>
+
+    <div class="tracker">
+        <div class="tracker-top">
+            <span class="tracker-date" id="trackerDate">Today</span>
+            <span class="tracker-count" id="trackerCount">0 / 10 taken</span>
+        </div>
+        <div class="tracker-bar-track">
+            <div class="tracker-bar-fill" id="trackerBar"></div>
+        </div>
+        <div class="tracker-msg" id="trackerMsg">Tap a medicine card to mark it as taken</div>
+        <div class="tracker-actions">
+            <span class="tracker-reset" id="trackerReset">Reset today's ticks</span>
+            <span class="tracker-reset" id="exportBtn">Download backup (.json)</span>
+            <label class="tracker-reset" for="importInput">Restore from backup</label>
+            <input type="file" id="importInput" accept="application/json" style="display:none;">
+        </div>
+    </div>
+
+    <div class="history">
+        <div class="history-title" id="historyToggle">
+            <span>Last 7 days</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="history-body" id="historyBody">
+            <div id="historyList"></div>
+            <div class="med-grid-wrap">
+                <div class="med-grid-label">By medicine</div>
+                <div class="med-grid-header" id="medGridHeader"></div>
+                <div id="medGridBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab" data-filter="morning">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v8"></path>
+                <path d="m4.93 10.93 1.41 1.41"></path>
+                <path d="M2 18h2"></path>
+                <path d="M20 18h2"></path>
+                <path d="m19.07 10.93-1.41 1.41"></path>
+                <path d="M22 22H2"></path>
+                <path d="m16 6-4 4-4-4"></path>
+                <path d="M16 18a4 4 0 0 0-8 0"></path>
+            </svg>
+            Morning
+        </button>        <button class="filter-tab" data-filter="afternoon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+            Afternoon
+        </button>
+        <button class="filter-tab" data-filter="evening">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 18a5 5 0 0 0-10 0"></path>
+                <line x1="12" y1="2" x2="12" y2="9"></line>
+                <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+                <line x1="1" y1="18" x2="3" y2="18"></line>
+                <line x1="21" y1="18" x2="23" y2="18"></line>
+                <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+                <line x1="23" y1="22" x2="1" y2="22"></line>
+                <line x1="8" y1="6" x2="16" y2="6"></line>
+            </svg>
+            Evening
+        </button>
+        <button class="filter-tab" data-filter="night">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+            Night
+        </button>
+    </div>
+
+    <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 7v5l3 3"></path>
+        </svg>
+        <p>Select a time above to view your medicines</p>
+        <span>Tap Morning, Afternoon, Evening or Night</span>
+    </div>
+
+    <!-- MORNING -->
+    <section class="time-section hidden" data-section="morning">
+        <div class="time-header">
+            <div class="time-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v8"></path>
+                    <path d="m4.93 10.93 1.41 1.41"></path>
+                    <path d="M2 18h2"></path>
+                    <path d="M20 18h2"></path>
+                    <path d="m19.07 10.93-1.41 1.41"></path>
+                    <path d="M22 22H2"></path>
+                    <path d="m16 6-4 4-4-4"></path>
+                    <path d="M16 18a4 4 0 0 0-8 0"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="time-title">Morning</div>
+                <div class="time-subtitle">Start your day with these medicines</div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="aciloc">
+            <div class="medicine-number">01</div>
+            <div>
+                <div class="medicine-name">Aciloc RD 20</div>
+                <div class="medicine-generic">Omeprazole 20mg + Domperidone 10mg<br><strong>Brand:</strong> Cadila</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Reduces acidity and helps with digestion.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge before-food">BEFORE FOOD</span>
+                <div class="timing-label">Take before breakfast</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="periset">
+            <div class="medicine-number">02</div>
+            <div>
+                <div class="medicine-name">Periset 4</div>
+                <div class="medicine-generic">Ondansetron</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Helps control nausea and vomiting.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge before-food">BEFORE FOOD</span>
+                <div class="timing-label">Before breakfast</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="triptofer">
+            <div class="medicine-number">03</div>
+            <div>
+                <div class="medicine-name">Triptofer</div>
+                <div class="medicine-generic">Ferrous Ascorbate + Folic Acid + Zinc</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Iron and folic acid supplementation for anemia.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After breakfast</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="ceftas-morning">
+            <div class="medicine-number">04</div>
+            <div>
+                <div class="medicine-name">Ceftas 200</div>
+                <div class="medicine-generic">Cefixime Dispersible 200mg<br><strong>Brand:</strong> Intas</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Antibiotic prescribed for UTI.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After breakfast</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AFTERNOON -->
+    <section class="time-section hidden" data-section="afternoon">
+        <div class="time-header">
+            <div class="time-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m6.34 17.66-1.41 1.41"></path>
+                    <path d="m19.07 4.93-1.41 1.41"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="time-title">Afternoon</div>
+                <div class="time-subtitle">Take these medicines after lunch</div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="ecosprin">
+            <div class="medicine-number">05</div>
+            <div>
+                <div class="medicine-name">Ecosprin 150</div>
+                <div class="medicine-generic">Aspirin 150mg</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Prescribed to support uterine blood flow.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After lunch</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="cccal">
+            <div class="medicine-number">06</div>
+            <div>
+                <div class="medicine-name">CC-CAL</div>
+                <div class="medicine-generic">Calcium Citrate + Magnesium + Zinc + Vitamin D3</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Calcium and vitamin D supplementation.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After lunch</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="omega3">
+            <div class="medicine-number">07</div>
+            <div>
+                <div class="medicine-name">Omega-3 / Apex</div>
+                <div class="medicine-generic">Marine Triglycerides + Methylcobalamin</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Omega-3 supplementation for pregnancy nutrition.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After lunch</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EVENING -->
+    <section class="time-section hidden" data-section="evening">
+        <div class="time-header">
+            <div class="time-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 18a5 5 0 0 0-10 0"></path>
+                    <line x1="12" y1="2" x2="12" y2="9"></line>
+                    <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+                    <line x1="1" y1="18" x2="3" y2="18"></line>
+                    <line x1="21" y1="18" x2="23" y2="18"></line>
+                    <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+                    <line x1="23" y1="22" x2="1" y2="22"></line>
+                    <line x1="8" y1="6" x2="16" y2="6"></line>
+                </svg>
+            </div>
+            <div>
+                <div class="time-title">Evening</div>
+                <div class="time-subtitle">Take between 5:00 – 6:30 PM</div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="argitas">
+            <div class="medicine-number">10</div>
+            <div>
+                <div class="medicine-name">Argitas</div>
+                <div class="medicine-generic">L-Arginine, Zinc &amp; Folic Acid Granules (20 x 10g)<br><strong>Brand:</strong> Intas</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Sachet, orange flavour, sugar free. Mix one sachet in water and drink between 5:00–6:30 PM.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge evening-time">5:00–6:30 PM</span>
+                <div class="timing-label">One sachet in water</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NIGHT -->
+    <section class="time-section hidden" data-section="night">
+        <div class="time-header">
+            <div class="time-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="time-title">Night</div>
+                <div class="time-subtitle">Take these medicines after dinner</div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="unimag">
+            <div class="medicine-number">08</div>
+            <div>
+                <div class="medicine-name">Unimag 100</div>
+                <div class="medicine-generic">Magnesium Bisglycinate</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Magnesium supplementation and muscle relaxation.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After dinner</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="soligest">
+            <div class="medicine-number">09</div>
+            <div>
+                <div class="medicine-name">Soligest SR 200</div>
+                <div class="medicine-generic">Progesterone 200mg</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Progesterone hormonal support during pregnancy.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After dinner</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+
+        <div class="medicine-card" data-id="ceftas-night">
+            <div class="medicine-number">04</div>
+            <div>
+                <div class="medicine-name">Ceftas 200</div>
+                <div class="medicine-generic">Cefixime Dispersible 200mg<br><strong>Brand:</strong> Intas</div>
+                <div class="medicine-purpose"><strong>Purpose:</strong> Antibiotic prescribed for UTI.</div>
+            </div>
+            <div class="timing">
+                <span class="timing-badge after-food">AFTER FOOD</span>
+                <div class="timing-label">After dinner</div>
+                <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="note">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5d4037" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <path d="M12 9v4"></path>
+            <path d="M12 17h.01"></path>
+        </svg>
+        <strong>Important:</strong>
+        Take medicines exactly according to your doctor's prescription.
+        Do not change the dosage, timing, or stop any medicine without
+        consulting your doctor.
+    </div>
+
+</div>
+
+<script>
+    const tabs = document.querySelectorAll('.filter-tab');
+    const sections = document.querySelectorAll('.time-section');
+    const emptyState = document.getElementById('emptyState');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const alreadyActive = tab.classList.contains('active');
+            tabs.forEach(t => t.classList.remove('active'));
+
+            if (alreadyActive) {
+                sections.forEach(section => section.classList.add('hidden'));
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            tab.classList.add('active');
+            emptyState.classList.add('hidden');
+            const filter = tab.dataset.filter;
+
+            sections.forEach(section => {
+                if (section.dataset.section === filter) {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        });
+    });
+
+    // ---- Daily tracker ----
+    const cards = document.querySelectorAll('.medicine-card[data-id]');
+    const trackerDate = document.getElementById('trackerDate');
+    const trackerCount = document.getElementById('trackerCount');
+    const trackerBar = document.getElementById('trackerBar');
+    const trackerMsg = document.getElementById('trackerMsg');
+    const trackerReset = document.getElementById('trackerReset');
+
+    const todayKey = new Date().toISOString().slice(0, 10); // e.g. 2026-08-08
+    const storageKey = 'medTracker_' + todayKey;
+
+    const todayLabel = new Date().toLocaleDateString(undefined, {
+        weekday: 'long', month: 'short', day: 'numeric'
+    });
+    trackerDate.textContent = todayLabel;
+
+    function loadTakenState() {
+        try {
+            return JSON.parse(localStorage.getItem(storageKey)) || {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function saveTakenState(state) {
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+        } catch (e) {}
+    }
+
+    let takenState = loadTakenState();
+
+    function updateProgress() {
+        const total = cards.length;
+        const taken = Object.values(takenState).filter(Boolean).length;
+        trackerCount.textContent = taken + ' / ' + total + ' taken';
+        trackerBar.style.width = (taken / total * 100) + '%';
+
+        if (taken === 0) {
+            trackerMsg.textContent = 'Tap a medicine card to mark it as taken';
+        } else if (taken === total) {
+            trackerMsg.textContent = 'All done for today! Great job.';
+        } else {
+            trackerMsg.textContent = (total - taken) + ' medicine' + (total - taken === 1 ? '' : 's') + ' left for today';
+        }
+    }
+
+    function applyCardState(card) {
+        const id = card.dataset.id;
+        if (takenState[id]) {
+            card.classList.add('taken');
+        } else {
+            card.classList.remove('taken');
+        }
+    }
+
+    cards.forEach(card => {
+        applyCardState(card);
+
+        card.addEventListener('click', () => {
+            const id = card.dataset.id;
+            takenState[id] = !takenState[id];
+            saveTakenState(takenState);
+            applyCardState(card);
+            updateProgress();
+            renderHistory();
+            renderMedGrid();
+        });
+    });
+
+    updateProgress();
+
+    // ---- Backup export / import ----
+    const exportBtn = document.getElementById('exportBtn');
+    const importInput = document.getElementById('importInput');
+
+    exportBtn.addEventListener('click', () => {
+        const backup = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('medTracker_')) {
+                try { backup[k] = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+            }
+        }
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'medication-tracker-backup-' + todayKey + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    importInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const data = JSON.parse(evt.target.result);
+                Object.keys(data).forEach(k => {
+                    if (k.startsWith('medTracker_')) {
+                        localStorage.setItem(k, JSON.stringify(data[k]));
+                    }
+                });
+                takenState = loadTakenState();
+                cards.forEach(applyCardState);
+                updateProgress();
+                renderHistory();
+                renderMedGrid();
+                trackerMsg.textContent = 'Backup restored successfully.';
+            } catch (err) {
+                trackerMsg.textContent = 'Could not read that backup file.';
+            }
+        };
+        reader.readAsText(file);
+        importInput.value = '';
+    });
+
+    trackerReset.addEventListener('click', () => {
+        takenState = {};
+        saveTakenState(takenState);
+        cards.forEach(applyCardState);
+        updateProgress();
+        renderHistory();
+        renderMedGrid();
+    });
+
+    // ---- Per-medicine 7-day grid ----
+    function renderMedGrid() {
+        const header = document.getElementById('medGridHeader');
+        const body = document.getElementById('medGridBody');
+        header.innerHTML = '<span></span>';
+        body.innerHTML = '';
+
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push(d);
+        }
+
+        days.forEach((d, idx) => {
+            const label = idx === 6 ? 'Tdy' : d.toLocaleDateString(undefined, { weekday: 'narrow' });
+            header.innerHTML += '<span>' + label + '</span>';
+        });
+
+        cards.forEach(card => {
+            const id = card.dataset.id;
+            const name = card.querySelector('.medicine-name').textContent;
+
+            const row = document.createElement('div');
+            row.className = 'med-grid-row';
+            let html = '<span class="med-grid-name">' + name + '</span>';
+
+            days.forEach((d, idx) => {
+                const key = 'medTracker_' + d.toISOString().slice(0, 10);
+                let taken = false;
+                try {
+                    const state = JSON.parse(localStorage.getItem(key)) || {};
+                    taken = !!state[id];
+                } catch (e) {}
+                const todayCls = idx === 6 ? ' today-col' : '';
+                html += '<span class="med-grid-dot' + (taken ? ' taken' : '') + todayCls + '"></span>';
+            });
+
+            row.innerHTML = html;
+            body.appendChild(row);
+        });
+    }
+
+    // ---- 7-day history ----
+    function renderHistory() {
+        const historyList = document.getElementById('historyList');
+        const total = cards.length;
+        historyList.innerHTML = '';
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = 'medTracker_' + d.toISOString().slice(0, 10);
+
+            let count = 0;
+            try {
+                const state = JSON.parse(localStorage.getItem(key)) || {};
+                count = Object.values(state).filter(Boolean).length;
+            } catch (e) {}
+
+            const label = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+            const pct = total ? Math.round((count / total) * 100) : 0;
+
+            let barClass = 'none';
+            if (count > 0 && count < total) barClass = 'partial';
+            if (count >= total && total > 0) barClass = 'complete';
+
+            const row = document.createElement('div');
+            row.className = 'history-row';
+            row.innerHTML =
+                '<span class="history-day' + (i === 0 ? ' today' : '') + '">' + label + '</span>' +
+                '<span class="history-bar-track"><span class="history-bar-fill ' + barClass + '" style="width:' + pct + '%"></span></span>' +
+                '<span class="history-count">' + count + '/' + total + '</span>';
+            historyList.appendChild(row);
+        }
+    }
+
+    renderHistory();
+    renderMedGrid();
+
+    const historyToggle = document.getElementById('historyToggle');
+    const historyBody = document.getElementById('historyBody');
+
+    historyToggle.addEventListener('click', () => {
+        historyToggle.classList.toggle('open');
+        historyBody.classList.toggle('open');
+    });
+</script>
+</body>
+</html>
